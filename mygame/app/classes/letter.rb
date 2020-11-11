@@ -6,8 +6,26 @@ class Letter
         @y = y
         @letter = letter
         @sens = (rand(2) == 0 ? 1 : -1)
-        @image = [x, y, 50, 50, "sprites/" + letter + ".png"]
+        @image = {
+            x: x,
+            y: y,
+            w: 50,
+            h: 50,
+            path: "sprites/" + letter + ".png"
+        }
         @current_sprite_number = 0
+    end
+
+    def serialize
+        {}
+    end
+    
+    def inspect
+        serialize.to_s
+    end
+        
+    def to_s
+        serialize.to_s
     end
 
     def move_x(mov_x)
@@ -19,7 +37,13 @@ class Letter
             self.current_sprite_number = 0
         end
 
-        @image = [x, y, 50, 50, "sprites/" + self.letter + "-" + self.current_sprite_number.to_s + ".png"]
+        @image = {
+            x: x,
+            y: y,
+            w: 50,
+            h: 50,
+            path: "sprites/" + self.letter + "-" + self.current_sprite_number.to_s + ".png"
+        }
     end
 
     def move_to_sky(mov_x, mov_y)

@@ -7,11 +7,19 @@ class Obstacle
         @width = width
         @height = height
         @sprite_name = sprite_name
-        @image = [x, y, height, width, "sprites/" + sprite_name]
+        @image = {
+            x: x,
+            y: y,
+            w: width,
+            h: height,
+            path: "sprites/" + sprite_name
+        }
         @type = type
         @display = true
         @tree = tree
     end
+
+
 
     def serialize
         { 
@@ -25,17 +33,43 @@ class Obstacle
         }
     end
 
+    def inspect
+        serialize.to_s
+    end
+        
+    def to_s
+        serialize.to_s
+    end
+    
     def updated_image(speed)
         self.x = self.x + speed
-        @image = [self.x, self.y, self.width, self.height, "sprites/" + self.sprite_name]
+        @image = {
+            x: self.x,
+            y: self.y,
+            w: self.width,
+            h: self.height,
+            path: "sprites/" + self.sprite_name
+        }
     end
 
     def tree_image
-        [self.x + 10, self.tree[1], 88, 100, "sprites/tree.png"]
+        {
+            x: self.x + 10,
+            y: self.tree[1],
+            w: 100,
+            h: 88,
+            path: "sprites/tree.png"
+        }
     end
 
     def grass
-        [self.x, self.y + 100, self.width, 8, "sprites/platform-grass.png"]
+        {
+            x: self.x,
+            y: self.y + 100,
+            w: self.width,
+            h: 8,
+            path: "sprites/platform-grass.png"
+        }
     end
 
     def current_pos

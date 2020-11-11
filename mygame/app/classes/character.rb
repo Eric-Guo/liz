@@ -1,6 +1,6 @@
 class Character
 
-    attr_accessor :x, :y, :sprite_name, :image, :jump_height, :moving_direction, :current_sprite_number, :flip_vertically, :limit_right, :limit_left, :moving_defaut
+    attr_accessor :x, :y, :sprite_name, :image, :jump_height, :moving_direction, :current_sprite_number, :flip_horizontally, :limit_right, :limit_left, :moving_defaut
     WIDTH = 50
     HEIGHT = 50
     def initialize(x, y, sprite_name, limit_left=0, limit_right=0)
@@ -8,8 +8,15 @@ class Character
         @y = y
         @sprite_name = sprite_name
         @current_sprite_number = 0
-        @flip_vertically = false
-        @image = [x, y, WIDTH, HEIGHT, "sprites/" + sprite_name + "-" + current_sprite_number.to_s + ".png", 0, 255, 255, 255, 255, 0, 0, -1, -1, flip_vertically]
+        @flip_horizontally = false
+        @image = {
+            x: x,
+            y: y,
+            w: WIDTH,
+            h: HEIGHT,
+            path: "sprites/" + sprite_name + "-" + current_sprite_number.to_s + ".png",
+            flip_horizontally: false
+          }
         @jump_height = 0
         @moving_direction = 0
         @limit_left = limit_left
@@ -26,6 +33,14 @@ class Character
         }
     end
 
+    def inspect
+        serialize.to_s
+    end
+        
+    def to_s
+        serialize.to_s
+    end
+
     def collision_points_fall
         [self.x, self.x + WIDTH, self.y]
     end
@@ -38,13 +53,13 @@ class Character
         #Ajuster le self.y
         if self.y > high_y && self.y < (high_y + tolerance)
             self.y = high_y
-            @image[1] = self.y
+            @image[:y] = self.y
         elsif self.y > middle_y && self.y < (middle_y + tolerance)
             self.y = middle_y
-            @image[1] = self.y
+            @image[:y] = self.y
         elsif self.y > bottom_y && self.y < (bottom_y + tolerance)
             self.y = bottom_y
-            @image[1] = self.y
+            @image[:y] = self.y
         end
         x, y = self.x, self.y
 
@@ -57,12 +72,19 @@ class Character
 
     def fall(gravitation)
         self.y -= gravitation
-        @image = [self.x, self.y, HEIGHT, WIDTH, "sprites/" + self.sprite_name + "-0.png"]
+        @image = {
+            x: self.x,
+            y: self.y,
+            w: WIDTH,
+            h: HEIGHT,
+            path: "sprites/" + self.sprite_name + "-0.png"
+        }
+        
     end
 
     def move_x(mov_x, sprite_animation=true)
         self.x += mov_x
-        @image[0] = self.x
+        @image[:x] = self.x
 
         self.limit_left -= mov_x
         self.limit_right -= mov_x
@@ -73,14 +95,14 @@ class Character
                 self.current_sprite_number = 0
             end
 
-            @image[4] = "sprites/" + sprite_name + "-" + self.current_sprite_number.to_s + ".png"
-            @image[14] = self.flip_vertically
+            @image[:path] = "sprites/" + sprite_name + "-" + self.current_sprite_number.to_s + ".png"
+            @image[:flip_horizontally] = self.flip_horizontally
         end
     end
 
     def move_y(mov_y)
         self.y += mov_y
-        @image[1] = self.y
+        @image[:y] = self.y
         
     end
 
@@ -111,6 +133,8 @@ class Character
         # return Math.sqrt(Math.sqrt(max_jump_height - current_height)).to_i
         5
     end
+
+
 end
 
 class Pnj < Character
@@ -124,7 +148,7 @@ class Pnj < Character
     def explode
         self.exploded = true
         @current_sprite_number = 0
-        @image[4] = "sprites/explosion-2.png"
+        @image[:path] = "sprites/explosion-2.png"
     end
 
 end
@@ -143,6 +167,16 @@ class Player < Character
     end
 
     def victory_image
-        [self.x, self.y, HEIGHT, WIDTH, "sprites/star.png"]
+        {
+            x: self.x,
+            y: self.y,
+            w: WIDTH,
+            h: HEIGHT,
+            path: "sprites/star.png"
+        }
+    end
+
+    def neutral_image
+        @image[:path] = "sprites/sorcerer-0.png"
     end
 end

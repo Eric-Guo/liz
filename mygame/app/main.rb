@@ -11,6 +11,7 @@ MAGIC_WORDS = ["GIBBON", "VEAU", "SANGLIER", "HERISSON", "PORC"]
 MAX_JUMP_HEIGHT = 1200
 def tick args
 
+
   args.state.game_started ||= false
   args.state.speed ||= 0
   args.state.speed_increment ||= STANDARD_SPEED
@@ -32,24 +33,27 @@ def tick args
   args.state.foods ||= []
   args.state.hold_food ||= ""
 
+  outputs_sprites = []
+  outputs_labels = []
   if args.state.game_started == false
+    puts("Game started")
     args.state.player = Player.new(500, 500, "sorcerer")
     args.state.obstacles << Obstacle.new(0, 0, 1280, 100, "platform-big.png", "3")
     args.state.game_started = true
     
     #sound_muted
-    sound_rand = rand(3)
-    if sound_rand == 0
-      args.outputs.sounds << 'sounds/desert.ogg'
-    elsif sound_rand == 1
-      args.outputs.sounds << 'sounds/grass.ogg'
-    elsif sound_rand == 2
-      args.outputs.sounds << 'sounds/wood.ogg'
-    end
+    # sound_rand = rand(3)
+    # if sound_rand == 0
+    #   args.outputs.sounds << 'sounds/desert.ogg'
+    # elsif sound_rand == 1
+    #   args.outputs.sounds << 'sounds/grass.ogg'
+    # elsif sound_rand == 2
+    #   args.outputs.sounds << 'sounds/wood.ogg'
+    # end
   end
 
   #Gestion affichage
-  args.outputs.sprites << [0, 0, 1280, 720, "sprites/background.png"]
+  outputs_sprites << [0, 0, 1280, 720, "sprites/background.png"]
   player_falling = true
 
   current_obstacles = []
@@ -58,9 +62,9 @@ def tick args
   args.state.obstacles.each do |obs|
     if obs.visible(args.state.speed) == true
       current_obstacles << obs
-      args.outputs.sprites << obs.updated_image(args.state.speed)
-      args.outputs.sprites << obs.grass
-      args.outputs.sprites << obs.tree_image if obs.tree != [nil, nil]
+      outputs_sprites << obs.updated_image(args.state.speed)
+      outputs_sprites << obs.grass
+      outputs_sprites << obs.tree_image if obs.tree != [nil, nil]
       args.state.obstacle_platforms << obs.collision_points_fall
       if middle_platform == false && args.state.speed != 0 && obs.in_the_middle == true
         middle_platform = true
@@ -88,27 +92,32 @@ def tick args
       letter.sens = -letter.sens if rand(3) == 0
       letter.move_to_sky((STANDARD_SPEED*letter.sens/1.3).to_i, STANDARD_SPEED)
       if letter.class.name == "Timer" || letter.class.name == "Food"
-        args.outputs.sprites << letter.image
+        outputs_sprites << letter.image
       elsif letter.class.name == "Letter"
-        args.outputs.labels << [letter.x, letter.y, letter.letter, 16, 0, 255, 255, 255, 255, "fonts/tooncast.ttf"]
+        outputs_labels << [letter.x, letter.y, letter.letter, 16, 0, 255, 255, 255, 255, "fonts/tooncast.ttf"]
       end
       remaining_letters << letter
     end
+  end  
+  
+  if $gtk.platform == 'iOS' || $gtk.platform == 'Android'
+    outputs_labels << [100, 100, "←", 36, 0, 255, 255, 255, 255]
+    outputs_labels << [200, 100, "→", 36, 0, 255, 255, 255, 255]
+    outputs_labels << [1200, 100, "↑", 36, 0, 255, 255, 255, 255]
   end
 
-
   if args.state.remaining_time < 10
-    args.outputs.labels << [610, 660, args.state.remaining_time, 50, 0, 255, 255, 255, 255, "fonts/tooncast.ttf"]
+    outputs_labels << [610, 660, args.state.remaining_time, 50, 0, 255, 255, 255, 255, "fonts/tooncast.ttf"]
   end
 
   args.state.letters = remaining_letters
-  args.outputs.labels << [600, 700, args.state.collected_word, 16, 0, 255, 255, 255, 255, "fonts/tooncast.ttf"]
+  outputs_labels << [600, 700, args.state.collected_word, 16, 0, 255, 255, 255, 255, "fonts/tooncast.ttf"]
 
   collision_intervalles = collision_intervalles(args.state.obstacle_platforms.uniq)
   if args.state.player.is_standing?(collision_intervalles) == true
     player_falling = false
-    if !args.inputs.keyboard.right && !args.inputs.keyboard.left
-      args.state.player.image[4] = "sprites/sorcerer-0.png"
+    if !args.inputs.keyboard.right && !args.inputs.keyboard.left && !args.inputs.controller_one.key_held.left
+      args.state.player.neutral_image
     end
   end
   args.state.player.move_x(args.state.speed, false)
@@ -119,17 +128,17 @@ def tick args
   elsif player_falling == false
     args.state.player.moving_direction = 0
   end
-  args.outputs.sprites << args.state.finish_door.image unless args.state.finish_door.nil?
+  outputs_sprites << args.state.finish_door.image unless args.state.finish_door.nil?
 
   if args.state.victory == false
-    args.outputs.sprites << args.state.player.image
+    outputs_sprites << args.state.player.image
   else
-    args.outputs.sprites << args.state.player.victory_image
+    outputs_sprites << args.state.player.victory_image
   end
 
-  args.outputs.labels << [10, 700, args.state.remaining_time, 1, 0, 255, 255, 255, 255, "fonts/press_start.ttf"]
-  args.outputs.sprites << [80, 665, 50, 50, "sprites/" + args.state.hold_food + "-0" + ".png"] unless args.state.hold_food == ""
-  args.outputs.labels << [1230, 700, "x" + args.state.speed_increment.to_s, 1, 0, 255, 255, 255, 255, "fonts/press_start.ttf"]
+  outputs_labels << [10, 700, args.state.remaining_time, 1, 0, 255, 255, 255, 255, "fonts/press_start.ttf"]
+  outputs_sprites << [80, 665, 50, 50, "sprites/" + args.state.hold_food + "-0" + ".png"] unless args.state.hold_food == ""
+  outputs_labels << [1230, 700, "x" + args.state.speed_increment.to_s, 1, 0, 255, 255, 255, 255, "fonts/press_start.ttf"]
   args.state.wabbits_goal_pos = []
   updated_wabbits = []
   args.state.wabbits.each do |wabbit|
@@ -143,7 +152,7 @@ def tick args
     end
     wabbit.fall(GRAVITATION) if wabbit.is_standing?(collision_intervalles) == false
     wabbit.move_x(args.state.speed, false)
-    args.outputs.sprites << wabbit.image
+    outputs_sprites << wabbit.image
     args.state.wabbits_goal_pos += wabbit_positions
     updated_wabbits << wabbit
     random_mov = rand(10)
@@ -173,12 +182,13 @@ def tick args
 
     args.state.game_over = true if args.state.remaining_time < 1
     #Mouvements joueur
-    if args.inputs.keyboard.left
-      args.state.player.flip_vertically = true
+
+    if args.inputs.keyboard.left || args.inputs.controller_one.key_held.left || (!args.inputs.finger_one.nil? && args.inputs.finger_one.x < 160) || (!args.inputs.finger_two.nil? && args.inputs.finger_two.x < 160)
+      args.state.player.flip_horizontally = true
       args.state.player.move_x(-10, true)
       args.state.player.moving_direction = -1
-    elsif args.inputs.keyboard.right
-      args.state.player.flip_vertically = false
+    elsif args.inputs.keyboard.right || args.inputs.controller_one.key_held.right || ((!args.inputs.finger_one.nil? || !args.inputs.finger_two.nil?) && args.inputs.finger_one.x > 190 && args.inputs.finger_one.x < 300)|| (!args.inputs.finger_two.nil? && args.inputs.finger_two.x > 190 && args.inputs.finger_one.x < 300)
+      args.state.player.flip_horizontally = false
       args.state.player.move_x(10, true)
       args.state.player.moving_direction = 1
     end
@@ -201,7 +211,7 @@ def tick args
       args.state.letters << Food.new(580 + rand(100), 0, "mushroom")
     end
 
-    if player_falling == false && (args.inputs.keyboard.up || args.inputs.keyboard.space)
+    if player_falling == false && (args.inputs.keyboard.up || args.inputs.keyboard.space || args.inputs.controller_one.key_held.a || (!args.inputs.finger_one.nil? && args.inputs.finger_one.x > 1050) || (!args.inputs.finger_two.nil? && args.inputs.finger_two.x > 1050))
       args.state.player.jump_height = MAX_JUMP_HEIGHT
     end
 
@@ -260,14 +270,14 @@ def tick args
 
 
     if args.state.victory == false
-      args.outputs.labels << [400, 360, "MORT AU NIVEAU " + (args.state.speed_increment - STANDARD_SPEED + 1).to_s, 1, 0, 255, 255, 255, 255, "fonts/press_start.ttf"]
-      args.outputs.labels << [300, 330, "ESPACE POUR RECOMMENCER", 1, 0, 255, 255, 255, 255, "fonts/press_start.ttf"]
+      outputs_labels << [400, 360, "MORT AU NIVEAU " + (args.state.speed_increment - STANDARD_SPEED + 1).to_s, 1, 0, 255, 255, 255, 255, "fonts/press_start.ttf"]
+      outputs_labels << [300, 330, "SAUT POUR RECOMMENCER", 1, 0, 255, 255, 255, 255, "fonts/press_start.ttf"]
     else
-      args.outputs.labels << [400, 360, "VICTOIRE AU NIVEAU " + (args.state.speed_increment - STANDARD_SPEED + 1).to_s, 1, 0, 255, 255, 255, 255, "fonts/press_start.ttf"]
-      args.outputs.labels << [300, 330, "ESPACE POUR NIVEAU SUIVANT", 1, 0, 255, 255, 255, 255, "fonts/press_start.ttf"]    
+      outputs_labels << [400, 360, "VICTOIRE AU NIVEAU " + (args.state.speed_increment - STANDARD_SPEED + 1).to_s, 1, 0, 255, 255, 255, 255, "fonts/press_start.ttf"]
+      outputs_labels << [300, 330, "SAUT POUR NIVEAU SUIVANT", 1, 0, 255, 255, 255, 255, "fonts/press_start.ttf"]    
     end
 
-    if args.inputs.keyboard.space
+    if args.inputs.keyboard.space || args.inputs.controller_one.key_held.start || (!args.inputs.finger_one.nil? && args.inputs.finger_one.x > 1050) || (!args.inputs.finger_two.nil? && args.inputs.finger_two.x > 1050)
       if args.state.victory == false
         args.state.speed_increment = STANDARD_SPEED
       else
@@ -298,4 +308,7 @@ def tick args
 
     end
   end
+
+  args.outputs.labels << outputs_labels
+  args.outputs.sprites << outputs_sprites
 end
