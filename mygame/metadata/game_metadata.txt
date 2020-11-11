@@ -1,0 +1,6 @@
+devid=kjoannon
+devtitle=Suzerain
+gameid=liz
+gametitle=Liz
+version=0.1
+icon=metadata/icon.png

@@ -1,0 +1,148 @@
+class Character
+
+    attr_accessor :x, :y, :sprite_name, :image, :jump_height, :moving_direction, :current_sprite_number, :flip_vertically, :limit_right, :limit_left, :moving_defaut
+    WIDTH = 50
+    HEIGHT = 50
+    def initialize(x, y, sprite_name, limit_left=0, limit_right=0)
+        @x = x
+        @y = y
+        @sprite_name = sprite_name
+        @current_sprite_number = 0
+        @flip_vertically = false
+        @image = [x, y, WIDTH, HEIGHT, "sprites/" + sprite_name + "-" + current_sprite_number.to_s + ".png", 0, 255, 255, 255, 255, 0, 0, -1, -1, flip_vertically]
+        @jump_height = 0
+        @moving_direction = 0
+        @limit_left = limit_left
+        @limit_right = limit_right
+        @moving_defaut = (rand(2) == 0 ? 1 : -1)
+    end
+
+    def serialize
+        { 
+            x: @x,
+            y: @y,
+            sprite_name: @sprite_name,
+            image: @image
+        }
+    end
+
+    def collision_points_fall
+        [self.x, self.x + WIDTH, self.y]
+    end
+    
+    def is_standing?(collision_inter)
+        bottom_y = 0 + 100
+        middle_y = 250 + 100
+        high_y = 500 + 100
+        tolerance = 20
+        #Ajuster le self.y
+        if self.y > high_y && self.y < (high_y + tolerance)
+            self.y = high_y
+            @image[1] = self.y
+        elsif self.y > middle_y && self.y < (middle_y + tolerance)
+            self.y = middle_y
+            @image[1] = self.y
+        elsif self.y > bottom_y && self.y < (bottom_y + tolerance)
+            self.y = bottom_y
+            @image[1] = self.y
+        end
+        x, y = self.x, self.y
+
+        if eval(collision_inter)
+            return true
+        end
+
+        return false
+    end
+
+    def fall(gravitation)
+        self.y -= gravitation
+        @image = [self.x, self.y, HEIGHT, WIDTH, "sprites/" + self.sprite_name + "-0.png"]
+    end
+
+    def move_x(mov_x, sprite_animation=true)
+        self.x += mov_x
+        @image[0] = self.x
+
+        self.limit_left -= mov_x
+        self.limit_right -= mov_x
+        if sprite_animation == true
+            if self.current_sprite_number < 5
+                self.current_sprite_number += 1
+            else
+                self.current_sprite_number = 0
+            end
+
+            @image[4] = "sprites/" + sprite_name + "-" + self.current_sprite_number.to_s + ".png"
+            @image[14] = self.flip_vertically
+        end
+    end
+
+    def move_y(mov_y)
+        self.y += mov_y
+        @image[1] = self.y
+        
+    end
+
+    def goal_pos
+        [
+            self.x + (WIDTH/2),
+            self.y + (HEIGHT/2),
+        ]
+    end
+
+    def in_the_middle
+        return ((self.x > 400) && (self.x < 800))
+    end
+
+    def falling_distance(max_jump_height)
+        # bottom_y = 0
+        # middle_y = 250
+        # high_y = 500
+        # if self.y > (high_y + 100)
+        #     current_height = self.y - (high_y + 100)
+        # elsif self.y > (middle_y + 100)
+        #     current_height = self.y - (middle_y + 100)
+        # elsif self.y > (bottom_y + 100)
+        #     current_height = self.y - (middle_y + 100)
+        # else
+        #     return 0
+        # end
+        # return Math.sqrt(Math.sqrt(max_jump_height - current_height)).to_i
+        5
+    end
+end
+
+class Pnj < Character
+    attr_accessor :exploded
+    def goal_pos
+        nbr = 50
+        width_add = WIDTH/nbr
+        (0..nbr).to_a.map {|i| [self.x + (i*width_add), self.y + (HEIGHT/2)]}
+    end
+
+    def explode
+        self.exploded = true
+        @current_sprite_number = 0
+        @image[4] = "sprites/explosion-2.png"
+    end
+
+end
+
+class Player < Character
+    def bag_zone
+        tolerance = 20
+        {
+            "x" => ((self.x-tolerance)..(self.x+WIDTH+tolerance)).to_a,
+            "y" => ((self.y-tolerance)..(self.y+HEIGHT+tolerance)).to_a
+        }
+    end
+
+    def in_win_zone
+        return ((self.x > 615) && (self.x < 680) && (self.y > 250) && (self.y < 480))
+    end
+
+    def victory_image
+        [self.x, self.y, HEIGHT, WIDTH, "sprites/star.png"]
+    end
+end
