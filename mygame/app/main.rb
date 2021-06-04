@@ -143,7 +143,7 @@ def tick args
   updated_wabbits = []
   args.state.wabbits.each do |wabbit|
     wabbit_positions = wabbit.goal_pos
-    if wabbit.exploded == true && @current_sprite_number < 7
+    if wabbit.exploded == true && @current_sprite_number.to_i < 7
       wabbit.move_x(args.state.speed, true)
     elsif wabbit.exploded == true
       next
